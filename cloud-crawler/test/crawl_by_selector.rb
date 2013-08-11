@@ -8,6 +8,8 @@ opts = Trollop::options do
   opt :urls, "urls to crawl", :short => "-u", :multi => true,  :default => "http://www.ehow.com"
   opt :selector, "selector", :default => "body", :type => :string
   opt :file, "file path to save output", :short => "-f", :default => "crawl.out", :type => :string
+  opt :headless, "whether to use headless browsing", :short => "-h", :default => false
+  opt :headless_wait, "whether to use headless browsing", :short => "-w", :default => 3, :type => :int
 end
 
 CloudCrawler::standalone_crawl(opts[:urls], {}) do |crawl|

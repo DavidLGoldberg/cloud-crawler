@@ -7,5 +7,7 @@ gem 'qless', :git=>"git://github.com/CalculatedContent/qless.git"
 # helper scripts
 gem 'whenever'
 gem 'fog'
+gem 'headless'
+gem 'selenium-webdriver'
 
 gemspec

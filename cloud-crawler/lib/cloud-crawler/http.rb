@@ -2,6 +2,8 @@ require 'net/https'
 require 'cloud-crawler/page'
 # require 'cloud-crawler/cookie_store'
 require 'cloud-crawler/logger'
+require 'headless'
+require 'selenium-webdriver'
 
 module CloudCrawler
   class HTTP
@@ -125,7 +127,11 @@ module CloudCrawler
           loc = url.merge(loc) if loc.relative?
 
           response, response_time = get_response(loc, referer)
+          #if true #fix for headless
+            #code = 200
+          #else
           code = Integer(response.code)
+          #end
           redirect_to = response.is_a?(Net::HTTPRedirection) ? URI(response['location']).normalize : nil
           yield response, code, loc, redirect_to, response_time
           limit -= 1
@@ -142,28 +148,46 @@ module CloudCrawler
       opts['User-Agent'] = user_agent if user_agent
       opts['Referer'] = referer.to_s if referer
       opts['Cookie'] =  @cookie_store.to_s unless @cookie_store.empty? || (!accept_cookies? && @opts[:cookies].nil?)
-      
       # LOGGER.info "getting cookie  as  #{@cookie_store.to_s} " 
 
       retries = 0
       begin
         start = Time.now()
-        # format request
-        req = Net::HTTP::Get.new(full_path, opts)
-        # HTTP Basic authentication
-        req.basic_auth url.user, url.password if url.user
-        response = connection(url).request(req)
+
+        # TODO: Fix user-agent, referer, and cookie settings from above.
+        # TODO: Coallesce with options and maybe ENV.
+        if true
+          Headless.ly do
+            driver = Selenium::WebDriver.for :firefox
+            driver.navigate.to url.to_s
+
+            # wait for a specific element to show up
+            # TODO: add the following in to the line below: @opts[:headless_wait].to_i 
+            wait = Selenium::WebDriver::Wait.new(:timeout => 5) # seconds
+            wait.until {
+              element = driver.find_element(:css => 'html')
+              puts driver.execute_script("return arguments[0].innerHTML;", element)
+              # TODO: can't really just do response = the above line.  Ideas?
+            }
+          end
+        else # not using headless:
+          # format request
+          req = Net::HTTP::Get.new(full_path, opts)
+          # HTTP Basic authentication
+          req.basic_auth url.user, url.password if url.user
+          response = connection(url).request(req)
+          @cookie_store.merge!(response['Set-Cookie']) if accept_cookies?
+          # LOGGER.info "setting cookie to  #{@cookie_store} "
+        end
         finish = Time.now()
         response_time = ((finish - start) * 1000).round
-       
-        @cookie_store.merge!(response['Set-Cookie']) if accept_cookies?
-       # LOGGER.info "setting cookie to  #{@cookie_store} "
+
         return response, response_time
       rescue Timeout::Error, Net::HTTPBadResponse, EOFError => e
-        puts e.inspect if verbose?
-        refresh_connection(url)
-        retries += 1
-        retry unless retries > 3
+          puts e.inspect if verbose?
+          refresh_connection(url)
+          retries += 1
+      retry unless retries > 3
       end
     end
 
@@ -200,6 +224,5 @@ module CloudCrawler
     def allowed?(to_url, from_url)
       to_url.host.nil? || (to_url.host == from_url.host)
     end
-
   end
 end
