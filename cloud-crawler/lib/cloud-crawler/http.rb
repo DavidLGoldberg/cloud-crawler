@@ -2,6 +2,8 @@ require 'net/https'
 require 'cloud-crawler/page'
 # require 'cloud-crawler/cookie_store'
 require 'cloud-crawler/logger'
+require 'headless'
+require 'selenium-webdriver'
 
 module CloudCrawler
   class HTTP
@@ -136,6 +138,42 @@ module CloudCrawler
     # Get an HTTPResponse for *url*, sending the appropriate User-Agent string
     #
     def get_response(url, referer = nil)
+      full_path = url.query.nil? ? url.path : "#{url.path}?#{url.query}"
+
+      opts = {}
+      opts['User-Agent'] = user_agent if user_agent
+      opts['Referer'] = referer.to_s if referer
+      opts['Cookie'] =  @cookie_store.to_s unless @cookie_store.empty? || (!accept_cookies? && @opts[:cookies].nil?)
+      
+      # LOGGER.info "getting cookie  as  #{@cookie_store.to_s} " 
+
+      retries = 0
+      begin
+        start = Time.now()
+        # format request
+        req = Net::HTTP::Get.new(full_path, opts)
+        # HTTP Basic authentication
+        req.basic_auth url.user, url.password if url.user
+        response = connection(url).request(req)
+        finish = Time.now()
+        response_time = ((finish - start) * 1000).round
+       
+        @cookie_store.merge!(response['Set-Cookie']) if accept_cookies?
+       # LOGGER.info "setting cookie to  #{@cookie_store} "
+        return response, response_time
+      rescue Timeout::Error, Net::HTTPBadResponse, EOFError => e
+        puts e.inspect if verbose?
+        refresh_connection(url)
+        retries += 1
+        retry unless retries > 3
+      end
+    end
+
+    #
+    # Get an HTTPResponse for *url*, sending the appropriate User-Agent string
+    # (USING SELENIUM'S HEADLESS BROWSING)
+    #
+    def get_response_headless(url, referer = nil)
       full_path = url.query.nil? ? url.path : "#{url.path}?#{url.query}"
 
       opts = {}
