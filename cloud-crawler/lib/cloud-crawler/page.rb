@@ -163,6 +163,9 @@ module CloudCrawler
     # otherwise.
     #
     def html?
+      if true #replace with check for headless
+          return true
+      end
       !!(content_type =~ %r{^(text/html|application/xhtml+xml)\b})
     end
     

@@ -18,8 +18,8 @@ CloudCrawler::standalone_crawl(opts[:urls], {}) do |crawl|
   puts "crawling with: #{$sel}"
   puts "saving to file: #{$file}"
   crawl.on_every_page do |p|
-    puts "page: #{p.url.to_s}"
-    page.doc.css($sel.to_s).each do |elem|
+    puts "url: #{p.url.to_s}"
+    p.doc.css($sel.to_s).each do |elem|
       File.open($file, 'a') { |file| file.write("#{elem.content}\n")}
     end
   end

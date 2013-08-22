@@ -4,6 +4,7 @@ require 'cloud-crawler/page'
 require 'cloud-crawler/logger'
 require 'headless'
 require 'selenium-webdriver'
+require 'ostruct'
 
 module CloudCrawler
   class HTTP
@@ -126,7 +127,12 @@ module CloudCrawler
           # request url
           loc = url.merge(loc) if loc.relative?
 
-          response, response_time = get_response(loc, referer)
+          if true #TODO: put code for headless flag here
+              response, response_time = get_response_headless(loc, referer)
+          else
+              response, response_time = get_response(loc, referer)
+          end
+
           code = Integer(response.code)
           redirect_to = response.is_a?(Net::HTTPRedirection) ? URI(response['location']).normalize : nil
           yield response, code, loc, redirect_to, response_time
@@ -174,7 +180,8 @@ module CloudCrawler
     # (USING SELENIUM'S HEADLESS BROWSING)
     #
     def get_response_headless(url, referer = nil)
-      full_path = url.query.nil? ? url.path : "#{url.path}?#{url.query}"
+      #full_path = url.query.nil? ? url.path : "#{url.path}?#{url.query}"
+      #TODO: do I need this?..
 
       opts = {}
       opts['User-Agent'] = user_agent if user_agent
@@ -186,11 +193,22 @@ module CloudCrawler
       retries = 0
       begin
         start = Time.now()
-        # format request
-        req = Net::HTTP::Get.new(full_path, opts)
-        # HTTP Basic authentication
-        req.basic_auth url.user, url.password if url.user
-        response = connection(url).request(req)
+
+        response = {}
+        Headless.ly do
+            driver = Selenium::WebDriver.for :firefox
+            driver.navigate.to url.to_s
+
+            # wait for a specific element to show up
+            # TODO: add the following in to the line below: @opts[:headless_wait].to_i
+            wait = Selenium::WebDriver::Wait.new(:timeout => 5) # seconds
+            wait.until {
+                response['body'] = driver.page_source
+                response['code'] = 200 #hardcoded for now
+                response = OpenStruct.new response
+            }
+        end
+
         finish = Time.now()
         response_time = ((finish - start) * 1000).round
        
