@@ -46,6 +46,7 @@ module CloudCrawler
         pages = []
         get(url, referer) do |response, code, location, redirect_to, response_time|
           pages << Page.new(location, :body => response.body.dup,
+                                      :headless => @opts[:headless],
                                       :code => code,
                                       :headers => response.to_hash,
                                       :referer => referer,

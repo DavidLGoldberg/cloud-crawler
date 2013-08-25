@@ -45,6 +45,7 @@ module CloudCrawler
       @url = url
       @data = OpenStruct.new
 
+      @headless = params[:headless]
       @code = params[:code]
       @headers = params[:headers] || {}
       @headers['content-type'] ||= ['']
@@ -163,7 +164,7 @@ module CloudCrawler
     # otherwise.
     #
     def html?
-      if true #replace with check for headless
+      if @headless
           return true
       end
       !!(content_type =~ %r{^(text/html|application/xhtml+xml)\b})
