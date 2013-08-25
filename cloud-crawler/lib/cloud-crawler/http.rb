@@ -127,7 +127,7 @@ module CloudCrawler
           # request url
           loc = url.merge(loc) if loc.relative?
 
-          if true #TODO: put code for headless flag here
+          if @opts[:headless]
               response, response_time = get_response_headless(loc, referer)
           else
               response, response_time = get_response(loc, referer)
@@ -196,12 +196,12 @@ module CloudCrawler
 
         response = {}
         Headless.ly do
-            driver = Selenium::WebDriver.for :firefox
+            driver = Selenium::WebDriver.for @opts[:headless_driver].to_sym
             driver.navigate.to url.to_s
 
             # wait for a specific element to show up
             # TODO: add the following in to the line below: @opts[:headless_wait].to_i
-            wait = Selenium::WebDriver::Wait.new(:timeout => 5) # seconds
+            wait = Selenium::WebDriver::Wait.new(:timeout => @opts[:headless_wait].to_i) # seconds
             wait.until {
                 response['body'] = driver.page_source
                 response['code'] = 200 #hardcoded for now

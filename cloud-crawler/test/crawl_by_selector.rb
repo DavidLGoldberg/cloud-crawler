@@ -10,14 +10,15 @@ opts = Trollop::options do
   opt :file, "file path to save output", :short => "-f", :default => "crawl.out", :type => :string
   opt :headless, "whether to use headless browsing", :short => "-h", :default => false
   opt :headless_wait, "whether to use headless browsing", :short => "-w", :default => 3, :type => :int
+  opt :headless_driver, "driver for the headless browser to use", :short => "-d", :default => "firefox"
 end
 
-CloudCrawler::standalone_crawl(opts[:urls], {}) do |crawl|
+CloudCrawler::standalone_crawl(opts[:urls], opts) do |worker|
   $sel = opts.selector
   $file = opts.file
   puts "crawling with: #{$sel}"
   puts "saving to file: #{$file}"
-  crawl.on_every_page do |p|
+  worker.on_every_page do |p|
     puts "url: #{p.url.to_s}"
     p.doc.css($sel.to_s).each do |elem|
       File.open($file, 'a') { |file| file.write("#{elem.content}\n")}

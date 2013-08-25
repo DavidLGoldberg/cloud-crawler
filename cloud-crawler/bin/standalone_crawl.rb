@@ -9,10 +9,6 @@ require 'open-uri'
 opts = Trollop::options do
   opt :job_name, "name of crawl", :short => "-n",  :default => "crawl"
   opt :urls, "urls to crawl", :short => "-u", :multi => true,  :default => "http://www.livestrong.com"
-  opt :selector, "selector", :short => "-s", :default => "body", :type => :string
-  opt :file, "file path to save output", :short => "-f", :default => "crawl.out", :type => :string
-  opt :headless, "whether to use headless browsing", :short => "-h", :default => false
-  opt :headless_wait, "whether to use headless browsing", :short => "-w", :default => 3, :type => :int
 
   opt :delay, "delay between requests (not used yet, see worker interval)",  :short => "-d", :default => 0  # not used yet
   opt :depth_limit, "limit the depth of the crawl", :short => "-l", :type => :int, :default => nil
