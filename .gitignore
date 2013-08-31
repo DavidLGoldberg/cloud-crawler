@@ -7,3 +7,4 @@ bundle
 .rvmrc
 spec/tmp
 coverage
+node_modules
