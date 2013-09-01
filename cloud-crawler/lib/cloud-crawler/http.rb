@@ -195,24 +195,13 @@ module CloudCrawler
       begin
         start = Time.now()
 
-        response = {}
-        Headless.ly do
-            driver = Selenium::WebDriver.for @opts[:headless_driver].to_sym
-            driver.navigate.to url.to_s
-
-            # wait for a specific element to show up
-            # TODO: add the following in to the line below: @opts[:headless_wait].to_i
-            wait = Selenium::WebDriver::Wait.new(:timeout => @opts[:headless_wait].to_i) # seconds
-            wait.until {
-                response['body'] = driver.page_source
-                response['code'] = 200 #hardcoded for now
-                response = OpenStruct.new response
-            }
-        end
+        #TODO: instead of backticks, something that will handle &'s etc.
+        output = `coffee headless.coffee -- "#{url.to_s}" "#{@opts[:headless_wait].to_i}"`
+        response = JSON.parse(output.strip)
+        response = OpenStruct.new response
 
         finish = Time.now()
         response_time = ((finish - start) * 1000).round
-       
         @cookie_store.merge!(response['Set-Cookie']) if accept_cookies?
        # LOGGER.info "setting cookie to  #{@cookie_store} "
         return response, response_time

@@ -1,13 +1,14 @@
 Browser = require 'zombie'
 browser = new Browser
 
+output = {}
 browser.visit process.argv[2], ->
-    console.log (browser.statusCode)
-    console.log(browser.redirected)
+    browser.wait process.argv[3], ->
+        output.code = browser.statusCode
+        output.redirected = browser.redirected
 
-    if browser.success
-        browser.wait(process.argv[3], ->
-            console.log(browser.html())
-            process.exit(1)
-        )
+        if browser.success
+            output.body = browser.html()
 
+        console.log(JSON.stringify(output))
+        process.exit(1)
