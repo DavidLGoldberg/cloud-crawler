@@ -2,8 +2,6 @@ require 'net/https'
 require 'cloud-crawler/page'
 # require 'cloud-crawler/cookie_store'
 require 'cloud-crawler/logger'
-require 'headless'
-require 'selenium-webdriver'
 require 'ostruct'
 
 module CloudCrawler
@@ -178,7 +176,6 @@ module CloudCrawler
 
     #
     # Get an HTTPResponse for *url*, sending the appropriate User-Agent string
-    # (USING SELENIUM'S HEADLESS BROWSING)
     #
     def get_response_headless(url, referer = nil)
       #full_path = url.query.nil? ? url.path : "#{url.path}?#{url.query}"
