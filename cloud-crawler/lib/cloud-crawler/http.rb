@@ -193,7 +193,7 @@ module CloudCrawler
         start = Time.now()
 
         #TODO: instead of backticks, something that will handle &'s etc.
-        output = `coffee headless.coffee -- "#{url.to_s}" "#{@opts[:headless_wait].to_i}"`
+        output = `coffee headless.coffee -- "#{url.to_s}" "#{@opts[:headless_wait].to_i}" 2> /dev/null`
         response = JSON.parse(output.strip)
         response = OpenStruct.new response
 
